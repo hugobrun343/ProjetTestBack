@@ -6,11 +6,11 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Unit tests for the Particule class.
  */
-public class ParticuleTest {
+public class ParticleTest {
 
     @Test
     void testParticleInitialization() {
-        Particule p = new Particule(10, 20, 3, -2, 5);
+        Particle p = new Particle(10, 20, 3, -2, 5);
         assertEquals(10, p.getX());
         assertEquals(20, p.getY());
         assertEquals(3, p.getVx());
@@ -20,7 +20,7 @@ public class ParticuleTest {
 
     @Test
     void testParticleMovement() {
-        Particule p = new Particule(0, 0, 2, -1, 1);
+        Particle p = new Particle(0, 0, 2, -1, 1);
         p.update(1); // 1 second step
         assertEquals(2, p.getX(), 0.001);
         assertEquals(-1, p.getY(), 0.001);
@@ -28,7 +28,7 @@ public class ParticuleTest {
 
     @Test
     void testParticleMovementWithSmallTimeStep() {
-        Particule p = new Particule(0, 0, 3, 4, 1);
+        Particle p = new Particle(0, 0, 3, 4, 1);
         p.update(0.1); // Small step
         assertEquals(0.3, p.getX(), 0.001);
         assertEquals(0.4, p.getY(), 0.001);

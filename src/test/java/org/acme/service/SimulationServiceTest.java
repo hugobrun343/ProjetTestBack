@@ -1,6 +1,6 @@
 package org.acme.service;
 
-import org.acme.model.Particule;
+import org.acme.model.Particle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.util.List;
@@ -20,17 +20,53 @@ public class SimulationServiceTest {
 
     @Test
     void testAddParticle() {
-        Particule p = new Particule(0, 0, 1, 1, 1);
-        simulationService.addParticule(p);
-        assertEquals(1, simulationService.getParticules().size());
+        Particle p = new Particle(5, 5, 1, -1, 1);
+        simulationService.addParticle(p);
+        assertEquals(1, simulationService.getParticles().size());
+    }
+
+    @Test
+    void testGetParticle() {
+        Particle p = new Particle(10, 10, 2, 2, 2);
+        simulationService.addParticle(p);
+        Particle retrieved = simulationService.getParticle(0);
+        assertEquals(10, retrieved.getX());
+        assertEquals(10, retrieved.getY());
+        assertEquals(2, retrieved.getMass());
+    }
+
+    @Test
+    void testRemoveParticle() {
+        Particle p1 = new Particle(0, 0, 1, 1, 1);
+        Particle p2 = new Particle(5, 5, -1, -1, 1);
+        simulationService.addParticle(p1);
+        simulationService.addParticle(p2);
+
+        simulationService.removeParticle(0);
+        assertEquals(1, simulationService.getParticles().size());
+        assertEquals(5, simulationService.getParticle(0).getX());
+    }
+
+    @Test
+    void testRemoveParticleInvalidIndex() {
+        assertThrows(IndexOutOfBoundsException.class, () -> {
+            simulationService.removeParticle(0);
+        });
+    }
+
+    @Test
+    void testGetParticleInvalidIndex() {
+        assertThrows(IndexOutOfBoundsException.class, () -> {
+            simulationService.getParticle(10);
+        });
     }
 
     @Test
     void testParticleMovement() {
-        Particule p = new Particule(0, 0, 2, -1, 1);
-        simulationService.addParticule(p);
+        Particle p = new Particle(0, 0, 2, -1, 1);
+        simulationService.addParticle(p);
         simulationService.updateSimulation();
-        List<Particule> particles = simulationService.getParticules();
+        List<Particle> particles = simulationService.getParticles();
 
         assertEquals(0.02, particles.get(0).getX(), 0.001);
         assertEquals(-0.01, particles.get(0).getY(), 0.001);
@@ -38,11 +74,11 @@ public class SimulationServiceTest {
 
     @Test
     void testGravityEffectCloseToBlackHole() {
-        Particule p = new Particule(1, 1, 0, 0, 1);
-        simulationService.addParticule(p);
+        Particle p = new Particle(1, 1, 0, 0, 1);
+        simulationService.addParticle(p);
 
         simulationService.updateSimulation();
-        Particule updated = simulationService.getParticules().get(0);
+        Particle updated = simulationService.getParticles().get(0);
 
         assertTrue(updated.getX() < 1);
         assertTrue(updated.getY() < 1);
@@ -50,11 +86,11 @@ public class SimulationServiceTest {
 
     @Test
     void testGravityEffectFarFromBlackHole() {
-        Particule p = new Particule(100, 100, 0, 0, 1);
-        simulationService.addParticule(p);
+        Particle p = new Particle(100, 100, 0, 0, 1);
+        simulationService.addParticle(p);
 
         simulationService.updateSimulation();
-        Particule updated = simulationService.getParticules().get(0);
+        Particle updated = simulationService.getParticles().get(0);
 
         assertTrue(updated.getX() < 100);
         assertTrue(updated.getY() < 100);
@@ -62,18 +98,18 @@ public class SimulationServiceTest {
 
     @Test
     void testElasticCollisionBetweenTwoParticles() {
-        Particule p1 = new Particule(0, 0, 1, 0, 1);
-        Particule p2 = new Particule(1.0, 0, -1, 0, 1);
+        Particle p1 = new Particle(0, 0, 1, 0, 1);
+        Particle p2 = new Particle(1.0, 0, -1, 0, 1);
 
-        simulationService.addParticule(p1);
-        simulationService.addParticule(p2);
+        simulationService.addParticle(p1);
+        simulationService.addParticle(p2);
 
         for (int i = 0; i < 10; i++) {
             simulationService.updateSimulation();
         }
 
-        Particule updatedP1 = simulationService.getParticules().get(0);
-        Particule updatedP2 = simulationService.getParticules().get(1);
+        Particle updatedP1 = simulationService.getParticles().get(0);
+        Particle updatedP2 = simulationService.getParticles().get(1);
 
         assertTrue(updatedP1.getVx() < 0);
         assertTrue(updatedP2.getVx() > 0);
@@ -81,19 +117,19 @@ public class SimulationServiceTest {
 
     @Test
     void testMultipleCollisionsInOneUpdate() {
-        Particule p1 = new Particule(0, 0, 1, 0, 1);
-        Particule p2 = new Particule(1.5, 0, -1, 0, 1);
-        Particule p3 = new Particule(0, 1.5, 0, -1, 1);
+        Particle p1 = new Particle(0, 0, 1, 0, 1);
+        Particle p2 = new Particle(1.5, 0, -1, 0, 1);
+        Particle p3 = new Particle(0, 1.5, 0, -1, 1);
 
-        simulationService.addParticule(p1);
-        simulationService.addParticule(p2);
-        simulationService.addParticule(p3);
+        simulationService.addParticle(p1);
+        simulationService.addParticle(p2);
+        simulationService.addParticle(p3);
 
         simulationService.updateSimulation();
 
-        Particule updatedP1 = simulationService.getParticules().get(0);
-        Particule updatedP2 = simulationService.getParticules().get(1);
-        Particule updatedP3 = simulationService.getParticules().get(2);
+        Particle updatedP1 = simulationService.getParticles().get(0);
+        Particle updatedP2 = simulationService.getParticles().get(1);
+        Particle updatedP3 = simulationService.getParticles().get(2);
 
         assertNotEquals(1, updatedP1.getVx());
         assertNotEquals(-1, updatedP2.getVx());
@@ -102,33 +138,33 @@ public class SimulationServiceTest {
 
     @Test
     void testPlayPauseFunctionality() {
-        Particule p = new Particule(0, 0, 1, 1, 1);
-        simulationService.addParticule(p);
+        Particle p = new Particle(0, 0, 1, 1, 1);
+        simulationService.addParticle(p);
 
         simulationService.togglePlayPause();
         simulationService.updateSimulation();
 
-        List<Particule> particles = simulationService.getParticules();
+        List<Particle> particles = simulationService.getParticles();
         assertEquals(0, particles.get(0).getX(), 0.001);
         assertEquals(0, particles.get(0).getY(), 0.001);
     }
 
     @Test
     void testResetSimulation() {
-        Particule p = new Particule(0, 0, 1, 1, 1);
-        simulationService.addParticule(p);
+        Particle p = new Particle(0, 0, 1, 1, 1);
+        simulationService.addParticle(p);
 
         simulationService.resetSimulation();
-        assertEquals(0, simulationService.getParticules().size());
+        assertEquals(0, simulationService.getParticles().size());
     }
 
     @Test
     void testLargeNumberOfParticles() {
         for (int i = 0; i < 1000; i++) {
-            simulationService.addParticule(new Particule(i, i, 1, 1, 1));
+            simulationService.addParticle(new Particle(i, i, 1, 1, 1));
         }
 
         simulationService.updateSimulation();
-        assertEquals(1000, simulationService.getParticules().size());
+        assertEquals(1000, simulationService.getParticles().size());
     }
 }
