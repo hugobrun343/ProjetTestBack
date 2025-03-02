@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -27,6 +28,7 @@ public class ParticleWebSocket {
 
     private static final Set<Session> sessions = Collections.synchronizedSet(new HashSet<>());
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private static final ReentrantLock lock = new ReentrantLock();
     private static boolean running = false;
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -38,13 +40,18 @@ public class ParticleWebSocket {
      */
     @OnOpen
     public void onOpen(Session session) {
-        sessions.add(session);
-        System.out.println("✅ New WebSocket connection: " + session.getId());
+        lock.lock();
+        try {
+            sessions.add(session);
+            System.out.println("✅ New WebSocket connection: " + session.getId());
 
-        if (!running) {
-            startBroadcast();
-            running = true;
-            System.out.println("🚀 Broadcasting started!");
+            if (!running) {
+                startBroadcast();
+                running = true;
+                System.out.println("🚀 Broadcasting started!");
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -56,12 +63,17 @@ public class ParticleWebSocket {
      */
     @OnClose
     public void onClose(Session session) {
-        sessions.remove(session);
-        System.out.println("❌ WebSocket disconnected: " + session.getId());
+        lock.lock();
+        try {
+            sessions.remove(session);
+            System.out.println("❌ WebSocket disconnected: " + session.getId());
 
-        if (sessions.isEmpty()) {
-            running = false;
-            System.out.println("🛑 No active sessions, stopping broadcast.");
+            if (sessions.isEmpty()) {
+                running = false;
+                System.out.println("🛑 No active sessions, stopping broadcast.");
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -76,10 +88,15 @@ public class ParticleWebSocket {
     /**
      * Starts the broadcasting loop, sending particle updates every 16 milliseconds (~60 FPS).
      */
-    void startBroadcast() {
+    private void startBroadcast() {
         scheduler.scheduleAtFixedRate(() -> {
-            if (!sessions.isEmpty() && running) {
-                broadcastParticles();
+            lock.lock();
+            try {
+                if (!sessions.isEmpty() && running) {
+                    broadcastParticles();
+                }
+            } finally {
+                lock.unlock();
             }
         }, 0, 16, TimeUnit.MILLISECONDS);
     }
@@ -94,8 +111,8 @@ public class ParticleWebSocket {
                 for (Session session : sessions) {
                     if (session.isOpen()) {
                         try {
-                            session.getBasicRemote().sendText(jsonParticles);
-                        } catch (IOException e) {
+                            session.getAsyncRemote().sendText(jsonParticles);
+                        } catch (Exception e) {
                             System.err.println("❌ Error sending message to session " + session.getId() + ": " + e.getMessage());
                         }
                     }
