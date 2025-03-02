@@ -1,0 +1,22 @@
+name: Promote Main to Prod
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  promote-to-prod:
+    name: Push Main to Prod
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Push main to prod
+        run: |
+          git fetch --unshallow
+          git checkout prod
+          git merge --no-ff main
+          git push origin prod
