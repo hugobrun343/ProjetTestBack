@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Unit test for ParticleWebSocket using Mockito.
@@ -82,9 +83,13 @@ class ParticleWebSocketTest {
 
         when(simulationService.getParticles()).thenReturn(mockParticles);
 
+        // Utilise Jackson pour obtenir le JSON attendu
+        ObjectMapper objectMapper = new ObjectMapper();
+        String expectedJson = objectMapper.writeValueAsString(mockParticles);
+
         particleWebSocket.broadcastParticles();
 
-        verify(mockRemote, atLeastOnce()).sendText(mockParticles.toString());
+        verify(mockRemote, atLeastOnce()).sendText(eq(expectedJson)); // Comparaison avec JSON
     }
 
     /**
