@@ -10,6 +10,8 @@ public class Particle {
     private double vx, vy;
     private double mass;
 
+    public Particle() {}
+
     public Particle(double x, double y, double vx, double vy, double mass) {
         this.x = x;
         this.y = y;
