@@ -20,7 +20,10 @@ jobs:
           git config --global user.name "GitHub Actions"
 
       - name: Push main to prod
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
+          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/hugobrun343/ProjetTestBack.git
           git fetch --unshallow
           git checkout prod
           git merge --no-ff main
