@@ -28,6 +28,7 @@ public class ParticleWebSocket {
     private static final Set<Session> sessions = Collections.synchronizedSet(new HashSet<>());
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private static boolean running = false;
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * Called when a new WebSocket connection is opened.
@@ -83,22 +84,25 @@ public class ParticleWebSocket {
         }, 0, 16, TimeUnit.MILLISECONDS);
     }
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-
     /**
      * Broadcasts the current list of particles to all connected clients.
-     * Each particle's data is sent as a string representation.
      */
     void broadcastParticles() {
         try {
             String jsonParticles = objectMapper.writeValueAsString(simulationService.getParticles());
             synchronized (sessions) {
                 for (Session session : sessions) {
-                    session.getBasicRemote().sendText(jsonParticles);
+                    if (session.isOpen()) {
+                        try {
+                            session.getBasicRemote().sendText(jsonParticles);
+                        } catch (IOException e) {
+                            System.err.println("❌ Error sending message to session " + session.getId() + ": " + e.getMessage());
+                        }
+                    }
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("❌ Error serializing particle data: " + e.getMessage());
         }
     }
 }
