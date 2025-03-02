@@ -1,8 +1,6 @@
 package org.acme.websocket;
 
-import org.acme.model.Particle;
 import org.acme.service.SimulationService;
-
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.websocket.*;
@@ -39,11 +37,12 @@ public class ParticleWebSocket {
     @OnOpen
     public void onOpen(Session session) {
         sessions.add(session);
-        System.out.println("New WebSocket connection: " + session.getId());
+        System.out.println("✅ New WebSocket connection: " + session.getId());
 
         if (!running) {
             startBroadcast();
             running = true;
+            System.out.println("🚀 Broadcasting started!");
         }
     }
 
@@ -56,11 +55,20 @@ public class ParticleWebSocket {
     @OnClose
     public void onClose(Session session) {
         sessions.remove(session);
-        System.out.println("WebSocket disconnected: " + session.getId());
+        System.out.println("❌ WebSocket disconnected: " + session.getId());
 
         if (sessions.isEmpty()) {
             running = false;
+            System.out.println("🛑 No active sessions, stopping broadcast.");
         }
+    }
+
+    /**
+     * Called when an error occurs on the WebSocket connection.
+     */
+    @OnError
+    public void onError(Session session, Throwable throwable) {
+        System.err.println("⚠️ WebSocket error on session " + session.getId() + ": " + throwable.getMessage());
     }
 
     /**
@@ -80,11 +88,14 @@ public class ParticleWebSocket {
      */
     void broadcastParticles() {
         String jsonParticles = simulationService.getParticles().toString();
+        System.out.println("📡 Broadcasting particles to " + sessions.size() + " clients: " + jsonParticles);
+
         synchronized (sessions) {
             for (Session session : sessions) {
                 try {
                     session.getBasicRemote().sendText(jsonParticles);
                 } catch (IOException e) {
+                    System.err.println("❗ Failed to send message to " + session.getId() + ": " + e.getMessage());
                     e.printStackTrace();
                 }
             }
