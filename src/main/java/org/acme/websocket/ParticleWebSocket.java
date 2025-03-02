@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * WebSocket server that continuously broadcasts particle updates at 60 FPS.
@@ -82,23 +83,22 @@ public class ParticleWebSocket {
         }, 0, 16, TimeUnit.MILLISECONDS);
     }
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     /**
      * Broadcasts the current list of particles to all connected clients.
      * Each particle's data is sent as a string representation.
      */
     void broadcastParticles() {
-        String jsonParticles = simulationService.getParticles().toString();
-        System.out.println("📡 Broadcasting particles to " + sessions.size() + " clients: " + jsonParticles);
-
-        synchronized (sessions) {
-            for (Session session : sessions) {
-                try {
+        try {
+            String jsonParticles = objectMapper.writeValueAsString(simulationService.getParticles());
+            synchronized (sessions) {
+                for (Session session : sessions) {
                     session.getBasicRemote().sendText(jsonParticles);
-                } catch (IOException e) {
-                    System.err.println("❗ Failed to send message to " + session.getId() + ": " + e.getMessage());
-                    e.printStackTrace();
                 }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
