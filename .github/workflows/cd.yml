@@ -14,16 +14,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Configure Git identity
-        run: |
-          git config --global user.email "github-actions@github.com"
-          git config --global user.name "GitHub Actions"
-
       - name: Push main to prod
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/hugobrun343/ProjetTestBack.git
           git fetch --unshallow
           git checkout prod
           git merge --no-ff main
