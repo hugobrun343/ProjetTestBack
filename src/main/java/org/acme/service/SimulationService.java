@@ -20,13 +20,13 @@ public class SimulationService {
     @Getter
     private boolean running = true;
 
-    private static final double G = 12;
+    private static final double G = 22;
     private static final double BLACK_HOLE_X = 0;
     private static final double BLACK_HOLE_Y = 0;
     private static final double BLACK_HOLE_MASS = 1000;
     private static final double PARTICLE_RADIUS = 1.0;
     private static final double MAX_FORCE = 200;
-    private static final double SPEED_DAMPING = 0.9999;
+    private static final double SPEED_DAMPING = 1;
 
     /**
      * Adds a particle to the simulation.
