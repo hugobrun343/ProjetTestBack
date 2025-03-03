@@ -83,13 +83,12 @@ class ParticleWebSocketTest {
 
         when(simulationService.getParticles()).thenReturn(mockParticles);
 
-        // Utilise Jackson pour obtenir le JSON attendu
         ObjectMapper objectMapper = new ObjectMapper();
         String expectedJson = objectMapper.writeValueAsString(mockParticles);
 
         particleWebSocket.broadcastParticles();
 
-        verify(mockRemote, atLeastOnce()).sendText(eq(expectedJson)); // Comparaison avec JSON
+        verify(mockRemote, atLeastOnce()).sendText(eq(expectedJson));
     }
 
     /**
