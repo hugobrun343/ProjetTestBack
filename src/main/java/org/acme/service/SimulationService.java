@@ -20,7 +20,7 @@ public class SimulationService {
     @Getter
     private boolean running = true;
 
-    private static final double G = 20;
+    private static final double G = 12;
     private static final double BLACK_HOLE_X = 0;
     private static final double BLACK_HOLE_Y = 0;
     private static final double BLACK_HOLE_MASS = 1000;
