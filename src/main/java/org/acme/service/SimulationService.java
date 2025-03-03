@@ -39,6 +39,33 @@ public class SimulationService {
     }
 
     /**
+     * Removes a particle from the simulation by index.
+     *
+     * @param index the index of the particle to remove
+     * @throws IndexOutOfBoundsException if the index is out of bounds
+     */
+    public void removeParticle(int index) {
+        if (index < 0 || index >= particles.size()) {
+            throw new IndexOutOfBoundsException("Invalid particle index: " + index);
+        }
+        particles.remove(index);
+    }
+
+    /**
+     * Retrieves a particle by its index.
+     *
+     * @param index the index of the particle
+     * @return the particle at the given index
+     * @throws IndexOutOfBoundsException if the index is out of bounds
+     */
+    public Particle getParticle(int index) {
+        if (index < 0 || index >= particles.size()) {
+            throw new IndexOutOfBoundsException("Invalid particle index: " + index);
+        }
+        return particles.get(index);
+    }
+
+    /**
      * Updates the simulation state.
      *
      * @return the updated list of particles
