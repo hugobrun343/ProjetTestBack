@@ -7,8 +7,8 @@ import java.util.List;
 import lombok.Getter;
 
 /**
- * Simulation service that handles the N-body particle system.
- * Manages particle updates, gravitational effects, collisions, play/pause, and reset functionality.
+ * Simulation service managing an N-body particle system.
+ * Handles particle updates, gravitational effects, collisions, play/pause functionality, and reset.
  */
 @ApplicationScoped
 public class SimulationService {
@@ -20,14 +20,16 @@ public class SimulationService {
     @Getter
     private boolean running = true;
 
-    private static final double G = 10;
+    private static final double G = 20;
     private static final double BLACK_HOLE_X = 0;
     private static final double BLACK_HOLE_Y = 0;
     private static final double BLACK_HOLE_MASS = 1000;
     private static final double PARTICLE_RADIUS = 1.0;
+    private static final double MAX_FORCE = 50;
+    private static final double SPEED_DAMPING = 0.95;
 
     /**
-     * Adds a new particle to the simulation.
+     * Adds a particle to the simulation.
      *
      * @param p the particle to add
      */
@@ -36,11 +38,11 @@ public class SimulationService {
     }
 
     /**
-     * Retrieves a particle by its index in the list.
+     * Retrieves a particle by its index.
      *
      * @param index the index of the particle
      * @return the particle at the given index
-     * @throws IndexOutOfBoundsException if the index is invalid
+     * @throws IndexOutOfBoundsException if the index is out of bounds
      */
     public Particle getParticle(int index) {
         if (index < 0 || index >= particles.size()) {
@@ -53,7 +55,7 @@ public class SimulationService {
      * Removes a particle from the simulation by index.
      *
      * @param index the index of the particle to remove
-     * @throws IndexOutOfBoundsException if the index is invalid
+     * @throws IndexOutOfBoundsException if the index is out of bounds
      */
     public void removeParticle(int index) {
         if (index < 0 || index >= particles.size()) {
@@ -63,14 +65,15 @@ public class SimulationService {
     }
 
     /**
-     * Updates the simulation by applying gravity, detecting collisions, and computing new positions.
+     * Updates the simulation by applying gravity, damping, and resolving collisions.
      *
-     * @return the list of particles after the update
+     * @return the updated list of particles
      */
     public List<Particle> updateSimulation() {
         if (running) {
             for (Particle p : particles) {
                 applyGravity(p);
+                dampenSpeed(p);
                 p.update(dt);
             }
             detectAndResolveCollisions();
@@ -79,9 +82,10 @@ public class SimulationService {
     }
 
     /**
-     * Applies the gravitational force of the black hole to a given particle.
+     * Applies gravitational force from the black hole to a particle,
+     * limiting excessive acceleration.
      *
-     * @param p the particle to be affected by gravity
+     * @param p the particle affected by gravity
      */
     private void applyGravity(Particle p) {
         double dx = BLACK_HOLE_X - p.getX();
@@ -89,20 +93,30 @@ public class SimulationService {
         double distanceSquared = dx * dx + dy * dy;
         double distance = Math.sqrt(distanceSquared);
 
-        // Prevents numerical explosion if a particle is too close to the black hole
         if (distance < 1) return;
 
-        // Gravitational force: F = G * (m1 * m2) / r²
         double force = (G * BLACK_HOLE_MASS * p.getMass()) / distanceSquared;
-        double ax = force * (dx / distance) / p.getMass();
-        double ay = force * (dy / distance) / p.getMass();
+        force = Math.min(force, MAX_FORCE);
+
+        double ax = (force * dx / distance) / p.getMass();
+        double ay = (force * dy / distance) / p.getMass();
 
         p.setVx(p.getVx() + ax * dt);
         p.setVy(p.getVy() + ay * dt);
     }
 
     /**
-     * Detects and resolves collisions between particles using an elastic collision model.
+     * Reduces the velocity of a particle to prevent excessive speed.
+     *
+     * @param p the particle to be slowed down
+     */
+    private void dampenSpeed(Particle p) {
+        p.setVx(p.getVx() * SPEED_DAMPING);
+        p.setVy(p.getVy() * SPEED_DAMPING);
+    }
+
+    /**
+     * Detects and resolves collisions between particles using elastic collision physics.
      */
     private void detectAndResolveCollisions() {
         for (int i = 0; i < particles.size(); i++) {
@@ -123,7 +137,7 @@ public class SimulationService {
     }
 
     /**
-     * Resolves a collision between two particles using elastic collision physics.
+     * Resolves a collision between two particles using elastic collision principles.
      *
      * @param p1 the first particle
      * @param p2 the second particle
@@ -133,7 +147,7 @@ public class SimulationService {
         double dy = p2.getY() - p1.getY();
         double distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance == 0) return; // Avoid division by zero
+        if (distance == 0) return;
 
         double nx = dx / distance;
         double ny = dy / distance;
@@ -142,7 +156,6 @@ public class SimulationService {
 
         double velocityAlongNormal = vxRelative * nx + vyRelative * ny;
 
-        // If particles are moving apart, no need to resolve collision
         if (velocityAlongNormal > 0) return;
 
         double restitution = 1.0;
