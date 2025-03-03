@@ -1,7 +1,7 @@
 package org.acme.websocket;
 
-import org.acme.model.Particle;
 import org.acme.service.SimulationService;
+import org.acme.model.Particle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
@@ -11,6 +11,7 @@ import jakarta.websocket.Session;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
 
@@ -30,7 +31,7 @@ class ParticleWebSocketTest {
     private Session mockSession;
 
     @Mock
-    private RemoteEndpoint.Basic mockRemote;
+    private RemoteEndpoint.Async mockAsyncRemote;
 
     private ParticleWebSocket particleWebSocket;
 
@@ -41,11 +42,13 @@ class ParticleWebSocketTest {
         MockitoAnnotations.openMocks(this);
 
         mockSessions = new CopyOnWriteArraySet<>();
-        particleWebSocket = spy(new ParticleWebSocket());
+        particleWebSocket = new ParticleWebSocket();
         particleWebSocket.simulationService = simulationService;
 
         when(mockSession.getId()).thenReturn("test-session");
-        when(mockSession.getBasicRemote()).thenReturn(mockRemote);
+        when(mockSession.isOpen()).thenReturn(true);
+        when(mockSession.getAsyncRemote()).thenReturn(mockAsyncRemote);
+        when(mockAsyncRemote.sendText(anyString())).thenReturn(CompletableFuture.completedFuture(null));
     }
 
     /**
@@ -73,7 +76,7 @@ class ParticleWebSocketTest {
      * Test that the WebSocket sends particle updates.
      */
     @Test
-    void testBroadcastParticles_SendsParticleData() throws IOException {
+    void testBroadcastParticles_SendsParticleData() throws IOException, InterruptedException {
         particleWebSocket.onOpen(mockSession);
 
         List<Particle> mockParticles = List.of(
@@ -87,8 +90,9 @@ class ParticleWebSocketTest {
         String expectedJson = objectMapper.writeValueAsString(mockParticles);
 
         particleWebSocket.broadcastParticles();
+        Thread.sleep(100);
 
-        verify(mockRemote, atLeastOnce()).sendText(eq(expectedJson));
+        verify(mockAsyncRemote, atLeastOnce()).sendText(eq(expectedJson));
     }
 
     /**
@@ -98,9 +102,15 @@ class ParticleWebSocketTest {
     void testStartBroadcast_RunsAt60FPS() throws InterruptedException, IOException {
         particleWebSocket.onOpen(mockSession);
 
-        TimeUnit.MILLISECONDS.sleep(100);
+        int sentMessages = 0;
 
-        verify(mockRemote, atLeast(5)).sendText(anyString());
+        for (int i = 0; i < 20; i++) {
+            TimeUnit.MILLISECONDS.sleep(50);
+            sentMessages = Mockito.mockingDetails(mockAsyncRemote).getInvocations().size();
+            if (sentMessages >= 5) break;
+        }
+
+        assertTrue(sentMessages >= 5, "Expected at least 5 messages, got " + sentMessages);
     }
 
     /**
@@ -109,7 +119,7 @@ class ParticleWebSocketTest {
     @Test
     void testBroadcastParticles_HandlesSendErrorsGracefully() throws IOException {
         particleWebSocket.onOpen(mockSession);
-        doThrow(new IOException("Mock Exception")).when(mockRemote).sendText(anyString());
+        doThrow(new RuntimeException("Mock Exception")).when(mockAsyncRemote).sendText(anyString());
 
         assertDoesNotThrow(() -> particleWebSocket.broadcastParticles());
     }

@@ -79,7 +79,6 @@ public class ParticleWebSocket {
             var particles = simulationService.getParticles();
             if (!particles.isEmpty()) {
                 var firstParticle = particles.get(0);
-                System.out.println("[SIMULATION] Timestamp: " + System.currentTimeMillis() + " First Particle: " + firstParticle);
             }
             String jsonParticles = objectMapper.writeValueAsString(particles);
             synchronized (sessions) {
