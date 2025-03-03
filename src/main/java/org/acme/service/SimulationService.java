@@ -95,7 +95,7 @@ public class SimulationService {
 
         if (distance < 1) return;
 
-        double force = G * BLACK_HOLE_MASS * p.getMass();
+        double force = G * BLACK_HOLE_MASS * p.getMass() * distance;
         force = Math.min(force, MAX_FORCE);
 
         if (distance < MIN_REPULSION_DISTANCE) {
