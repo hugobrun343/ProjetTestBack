@@ -26,7 +26,7 @@ public class SimulationService {
     private static final double PARTICLE_RADIUS = 1.0;
     private static final double MAX_FORCE = 500;
     private static final double MIN_REPULSION_DISTANCE = 5;
-    private static final double REPULSION_FORCE = 18;
+    private static final double REPULSION_FORCE = 26;
     private static final double SPEED_DAMPING = 1;
 
     /**
