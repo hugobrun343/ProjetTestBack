@@ -19,14 +19,14 @@ public class SimulationService {
     @Getter
     private boolean running = true;
 
-    private static final double G = 0.02;
+    private static final double G = 0.015;
     private static final double BLACK_HOLE_X = 0;
     private static final double BLACK_HOLE_Y = 0;
     private static final double BLACK_HOLE_MASS = 1000;
     private static final double PARTICLE_RADIUS = 1.0;
     private static final double MAX_FORCE = 500;
     private static final double MIN_REPULSION_DISTANCE = 5;
-    private static final double REPULSION_FORCE = 5;
+    private static final double REPULSION_FORCE = 10;
     private static final double SPEED_DAMPING = 0.997;
 
     /**
